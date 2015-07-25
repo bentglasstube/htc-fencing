@@ -41,12 +41,14 @@ my @poly = ();
 {
   local $/ = '';
   my $svg = <>;
-  my ($compound) = $svg =~ m|(<path.*?id="compound".*?/>)|s;
-  my ($data) = $compound =~ m/ d="(.*?)"/s;
+  my ($data) = $svg =~ m|<path id="compound" d="(.*?)"/>|s;
+
+  $data =~ s/\n/ /g;
+  say STDERR "Path data: $data";
 
   my $num = qr/-?\d*(?:\.\d+)?/;
 
-  $data =~ s/^([mM])[\s,]*($num)[\s,]+($num)//;
+  $data =~ s/^([mM])[\s,]*($num)[\s,]+($num)[\s,]*//;
   my $command = 'l';
   my $relative = $1 eq 'm';
   my $x = $2;
@@ -65,7 +67,7 @@ my @poly = ();
     }
 
     if ($command eq 'l') {
-      if ($data =~ s/^[\s,]*($num)[\s,]+($num)//) {
+      if ($data =~ s/^[\s,]*($num)[\s,]+($num)[\s,]*//) {
         $x = $1 + ($relative ? $x : 0);
         $y = $2 + ($relative ? $y : 0);
         push @poly, Point->new($x, $y);
@@ -73,14 +75,14 @@ my @poly = ();
         say STDERR "Adding point ($x, $y)";
       }
     } elsif ($command eq 'h') {
-      if ($data =~ s/^\D*($num)//) {
+      if ($data =~ s/^\D*($num)[\s,]*//) {
         $x = $1 + ($relative ? $x : 0);
         push @poly, Point->new($x, $y);
 
         say STDERR "Adding point ($x, $y)";
       }
     } elsif ($command eq 'v') {
-      if ($data =~ s/^\D*($num)//) {
+      if ($data =~ s/^\D*($num)[\s,]*//) {
         $y = $1 + ($relative ? $y : 0);
         push @poly, Point->new($x, $y);
 

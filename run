@@ -41,8 +41,8 @@ my @poly = ();
 {
   local $/ = '';
   my $svg = <>;
-  my ($compound) = $svg =~ m|(<path.*?id="compound".*?/>)|;
-  my ($data) = $compound =~ m/ d="(.*?)"/;
+  my ($compound) = $svg =~ m|(<path.*?id="compound".*?/>)|s;
+  my ($data) = $compound =~ m/ d="(.*?)"/s;
 
   my $num = qr/-?\d*(?:\.\d+)?/;
 

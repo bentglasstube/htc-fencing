@@ -16,23 +16,26 @@ package Point {
 
   sub _left {
     my ($self, $a, $b) = @_;
-    return ($a->x - $self->x) * ($b->y - $self->y) - ($b->x - $self->x) * ($a->y - $self->y);
+    return ($b->x - $a->x) * ($self->y - $a->y) - ($self->x - $a->x) * ($b->y - $a->y);
   }
 
-  sub wind_poly {
+  sub inside_poly {
     my ($self, @verts) = @_;
 
     my $winding = 0;
 
     for my $i (0 .. $#verts - 1) {
+      my $left = $self->_left(@verts[$i, $i + 1]);
+      return 1 if $left == 0; # point on edge
+
       if ($verts[$i]->y <= $self->y) {
-        $winding++ if $verts[$i + 1]->y > $self->y and $self->_left(@verts[$i, $i + 1]) >= 0;
+        $winding++ if $verts[$i + 1]->y > $self->y and $left > 0;
       } else {
-        $winding-- if $verts[$i + 1]->y <= $self->y and $self->_left(@verts[$i, $i + 1]) <= 0;
+        $winding-- if $verts[$i + 1]->y <= $self->y and $left < 0;
       }
     }
 
-    return $winding;
+    return $winding != 0;
   }
 };
 
@@ -103,5 +106,5 @@ while (<>) {
   next unless m/(-?\d*(?:\.\d+)?)\D+(-?\d*(?:\.\d+)?)/;
   my $point = Point->new($1, $2);
 
-  say $point->wind_poly(@poly) == 0 ? 'false' : 'true';
+  say $point->inside_poly(@poly) ? 'true' : 'false';
 }

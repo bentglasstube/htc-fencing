@@ -1,5 +1,100 @@
-#!/usr/bin/python
+#!/usr/bin/env perl
 
-# To solve this problem, make the './run' executable handle any 
-# appropriate command line arguments and stdin and output the
-# solution to stdout.
+use v5.20;
+
+use strict;
+use warnings;
+
+package Point {
+  sub new {
+    my ($class, $x, $y) = @_;
+    return bless [$x, $y], $class;
+  }
+
+  sub x { return shift->[0] }
+  sub y { return shift->[1] }
+
+  sub _left {
+    my ($self, $a, $b) = @_;
+    return ($a->x - $self->x) * ($b->y - $self->y) - ($b->x - $self->x) * ($a->y - $self->y);
+  }
+
+  sub wind_poly {
+    my ($self, @verts) = @_;
+
+    my $winding = 0;
+
+    for my $i (0 .. $#verts - 1) {
+      if ($verts[$i]->y <= $self->y) {
+        $winding++ if $verts[$i + 1]->y > $self->y and $self->_left(@verts[$i, $i + 1]) >= 0;
+      } else {
+        $winding-- if $verts[$i + 1]->y <= $self->y and $self->_left(@verts[$i, $i + 1]) <= 0;
+      }
+    }
+
+    return $winding;
+  }
+};
+
+my @poly = ();
+
+{
+  local $/ = '';
+  my $svg = <>;
+  my ($compound) = $svg =~ m|(<path.*?id="compound".*?/>)|;
+  my ($data) = $compound =~ m/ d="(.*?)"/;
+
+  my $num = qr/-?\d*(?:\.\d+)?/;
+
+  $data =~ s/^([mM])[\s,]*($num)[\s,]+($num)//;
+  my $command = 'l';
+  my $relative = $1 eq 'm';
+  my $x = $2;
+  my $y = $3;
+
+  say STDERR "Starting path at ($x, $y)";
+
+  push @poly, Point->new($x, $y);
+
+  while ($data) {
+    if ($data =~ s/^([hHlLvVzZ])//) {
+      $command = lc $1;
+      $relative = $1 eq lc $1;
+
+      say STDERR "Command: $1";
+    }
+
+    if ($command eq 'l') {
+      if ($data =~ s/^\D*($num)[\s,]+($num)//) {
+        $x = $1 + ($relative ? $x : 0);
+        $y = $2 + ($relative ? $y : 0);
+        push @poly, Point->new($x, $y);
+
+        say STDERR "Adding point ($x, $y)";
+      }
+    } elsif ($command eq 'h') {
+      if ($data =~ s/^\D*($num)//) {
+        $x = $1 + ($relative ? $x : 0);
+        push @poly, Point->new($x, $y);
+
+        say STDERR "Adding point ($x, $y)";
+      }
+    } elsif ($command eq 'v') {
+      if ($data =~ s/^\D*($num)//) {
+        $y = $1 + ($relative ? $y : 0);
+        push @poly, Point->new($x, $y);
+
+        say STDERR "Adding point ($x, $y)";
+      }
+    } elsif ($command eq 'z') {
+      push @poly, $poly[0];
+    }
+  }
+}
+
+while (<>) {
+  next unless m/(-?\d*(?:\.\d+)?)\D+(-?\d*(?:\.\d+)?)/;
+  my $point = Point->new($1, $2);
+
+  say $point->wind_poly(@poly) == 0 ? 'false' : 'true';
+}

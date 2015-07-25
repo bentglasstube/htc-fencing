@@ -16,7 +16,7 @@ package Point {
 
   sub _left {
     my ($self, $a, $b) = @_;
-    return ($b->x - $a->x) * ($self->y - $a->y) - ($self->x - $a->x) * ($b->y - $a->y);
+    return ($a->x - $self->x) * ($b->y - $self->y) - ($b->x - $self->x) * ($a->y - $self->y);
   }
 
   sub inside_poly {
@@ -25,13 +25,10 @@ package Point {
     my $winding = 0;
 
     for my $i (0 .. $#verts - 1) {
-      my $left = $self->_left(@verts[$i, $i + 1]);
-      return 1 if $left == 0; # point on edge
-
       if ($verts[$i]->y <= $self->y) {
-        $winding++ if $verts[$i + 1]->y > $self->y and $left > 0;
+        $winding++ if $verts[$i + 1]->y > $self->y and $self->_left(@verts[$i, $i + 1]) > 0;
       } else {
-        $winding-- if $verts[$i + 1]->y <= $self->y and $left < 0;
+        $winding-- if $verts[$i + 1]->y <= $self->y and $self->_left(@verts[$i, $i + 1]) < 0;
       }
     }
 
@@ -48,7 +45,6 @@ my @poly = ();
   my ($data) = $compound =~ m/ d="(.*?)"/s;
 
   $data =~ s/\n/ /g;
-  say STDERR "Path data: $data";
 
   my $num = qr/
     [+-]?
@@ -62,16 +58,12 @@ my @poly = ();
   my $x = $2;
   my $y = $3;
 
-  say STDERR "Starting path at ($x, $y)";
-
   push @poly, Point->new($x, $y);
 
   while ($data) {
     if ($data =~ s/^([hHlLvVzZ])//) {
       $command = lc $1;
       $relative = $1 eq lc $1;
-
-      say STDERR "Command: $1";
     }
 
     if ($command eq 'l') {
@@ -79,22 +71,16 @@ my @poly = ();
         $x = $1 + ($relative ? $x : 0);
         $y = $2 + ($relative ? $y : 0);
         push @poly, Point->new($x, $y);
-
-        say STDERR "Adding point ($x, $y)";
       }
     } elsif ($command eq 'h') {
       if ($data =~ s/^\D*($num)[\s,]*//) {
         $x = $1 + ($relative ? $x : 0);
         push @poly, Point->new($x, $y);
-
-        say STDERR "Adding point ($x, $y)";
       }
     } elsif ($command eq 'v') {
       if ($data =~ s/^\D*($num)[\s,]*//) {
         $y = $1 + ($relative ? $y : 0);
         push @poly, Point->new($x, $y);
-
-        say STDERR "Adding point ($x, $y)";
       }
     } elsif ($command eq 'z') {
       push @poly, $poly[0];

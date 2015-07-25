@@ -26,9 +26,9 @@ package Point {
 
     for my $i (0 .. $#verts - 1) {
       if ($verts[$i]->y <= $self->y) {
-        $winding++ if $verts[$i + 1]->y > $self->y and $self->_left(@verts[$i, $i + 1]) >= 0;
+        $winding++ if $verts[$i + 1]->y > $self->y and $self->_left(@verts[$i, $i + 1]) > 0;
       } else {
-        $winding-- if $verts[$i + 1]->y <= $self->y and $self->_left(@verts[$i, $i + 1]) <= 0;
+        $winding-- if $verts[$i + 1]->y <= $self->y and $self->_left(@verts[$i, $i + 1]) < 0;
       }
     }
 

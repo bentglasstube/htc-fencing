@@ -65,7 +65,7 @@ my @poly = ();
     }
 
     if ($command eq 'l') {
-      if ($data =~ s/^\D*($num)[\s,]+($num)//) {
+      if ($data =~ s/^[\s,]*($num)[\s,]+($num)//) {
         $x = $1 + ($relative ? $x : 0);
         $y = $2 + ($relative ? $y : 0);
         push @poly, Point->new($x, $y);

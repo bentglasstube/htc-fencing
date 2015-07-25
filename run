@@ -41,7 +41,8 @@ my @poly = ();
 {
   local $/ = '';
   my $svg = <>;
-  my ($data) = $svg =~ m|<path id="compound" d="(.*?)"/>|s;
+  my ($compound) = $svg =~ m/(<path.*?id="compound".*?\/>)/s;
+  my ($data) = $compound =~ m/ d="(.*?)"/s;
 
   $data =~ s/\n/ /g;
   say STDERR "Path data: $data";

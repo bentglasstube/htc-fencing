@@ -46,9 +46,13 @@ my @poly = ();
   $data =~ s/\n/ /g;
   say STDERR "Path data: $data";
 
-  my $num = qr/-?\d*(?:\.\d+)?/;
+  my $num = qr/
+    [+-]?
+    (?: \d* \. \d+ | \d+ \.? )
+    (?: e [+-]? \d+)?
+  /xi;
 
-  $data =~ s/^([mM])[\s,]*($num)[\s,]+($num)[\s,]*//;
+  $data =~ s/^([mM])[\s,]*($num)[\s,]*($num)[\s,]*//;
   my $command = 'l';
   my $relative = $1 eq 'm';
   my $x = $2;
@@ -67,7 +71,7 @@ my @poly = ();
     }
 
     if ($command eq 'l') {
-      if ($data =~ s/^[\s,]*($num)[\s,]+($num)[\s,]*//) {
+      if ($data =~ s/^[\s,]*($num)[\s,]*($num)[\s,]*//) {
         $x = $1 + ($relative ? $x : 0);
         $y = $2 + ($relative ? $y : 0);
         push @poly, Point->new($x, $y);
